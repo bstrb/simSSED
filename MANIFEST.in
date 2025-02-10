@@ -1,0 +1,2 @@
+graft src/simserialED/scripts
+graft src/simserialED/gui

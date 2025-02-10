@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}Setup{% endblock %}
+
+{% block content %}
+    <h1>Simulation Setup</h1>
+    <p>
+        Under construction
+    </p>
+    <form method=post enctype=multipart/form-data>
+        <label for="kv">Acelleration voltage [kV]</label>
+        <input type="number" id="kv" name="kv" value=200><br>
+        <label for="calibration">Detector calibration [Å^-1 / pixel]</label>
+        <input type="number" id="calibration" name="calibration" value=0.0014><br>
+        <label for="a">a [Å]</label>
+        <input type="number" id="a", name="a" value=10><br>
+        <label for="b">b [Å]</label>
+        <input type="number" id="b", name="b" value=10><br>
+        <label for="c">c [Å]</label>
+        <input type="number" id="c", name="c" value=10><br>
+        <label for="alpha">alpha [deg]</label>
+        <input type="number" id="alpha", name="alpha" value=90><br>
+        <label for="beta">beta [deg]</label>
+        <input type="number" id="beta", name="beta" value=90><br>
+        <label for="gamma">gamma [deg]</label>
+        <input type="number" id="gamma", name="gamma" value=90><br>
+        <label for="spacegroup">Space group number</label>
+        <input type="number" id="spacegroup", name="spacegroup" value=1><br>
+        <label for="angres">Angular resolution of simulations [deg]</label>
+        <input type="number" id="angres", name="angres" value=1><br>
+        <input type=submit value=Submit>
+    </form>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block title %}Simulation{% endblock %}
+
+{% block content %}
+    <h1>Simulation parameters</h1>
+
+    {% if ready %}
+
+    <h2>Warning: this can take a few minutes. See the console for runtime status.</h2>
+
+    <ul>
+        <li>Acelleration voltage: {{ kv }} kV</li>
+        <li>Unit cell abc: {{ a }} Å, {{ b }} Å, {{ c }} Å</li>
+        <li>Unit cell αβγ: {{ alpha }}°, {{ beta }}°, {{ gamma }}°</li>
+        <li>Space group: {{ spacegroup_full }} ({{ spacegroup }})</li>
+        <li>Angular resolution: {{ angres }}°</li>
+        <li>Simulation count: {{ nsim }}</li>
+    </ul>
+    <form method=post enctype=multipart/form-data>
+        <input type=submit value="Run simulation">
+    </form>
+        {% if done %}
+        Done, took {{ runtime }}sec.
+        {% endif %}
+    {% else %}
+    <h2>Please set up simulation first</h2>
+    {% endif %}
+{% endblock %}

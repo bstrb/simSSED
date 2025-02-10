@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    {% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>{% block title %}{% endblock %} - {{ title }}</title>
+    {% endblock %}
+  </head>
+  <body>
+    <div id="header-return"><a href="/">Home</a></div>
+    <div id="content">{% block content %}{% endblock %}</div>
+    <div id="footer">
+      {% block footer %}
+      &copy; Copyright 2024 by me.
+      {% endblock %}
+    </div>
+  </body>
+</html>

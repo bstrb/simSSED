@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}Reset{% endblock %}
+
+{% block content %}
+    <h1>Reset</h1>
+    Resets all persistent data, e.g. the filename and unit cell parameters
+    <form method=post enctype=multipart/form-data>
+        <input type=submit value=Reset>
+    </form>
+{% endblock %}

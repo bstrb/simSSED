@@ -1,0 +1,12 @@
+/* TODO */
+p {
+    /* Just a test */
+    font-family: 'Times New Roman', Times, serif;
+    white-space: pre-wrap;
+}
+
+label {
+    display: inline-block;
+    min-width: 200px;
+    text-align: right;
+}

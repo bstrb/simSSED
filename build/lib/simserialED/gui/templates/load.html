@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block title %}Load data{% endblock %}
+
+{% block content %}
+    <h1>Load data</h1>
+    
+    <form method=post enctype=multipart/form-data>
+        <input type=submit value=Select>
+    </form>
+
+<p>
+<b>{{ filename }}</b>
+{{ content }}
+</p>
+{% endblock %}

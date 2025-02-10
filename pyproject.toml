@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simserialED"
+version = "0.0.1"
+description="Simulate serialED datasets"
+readme = "README.md"
+authors = [
+  { name = "Viljar Femoen", email = "viljar.femoen@mmk.su.se" },
+]
+
+dependencies = [
+    "hyperspy >= 2.2",
+    "pyxem >= 0.19.1",
+    "flask",
+]
+
+[project.scripts]
+"simserialED" = "simserialED:gui"
+"simserialED.setup" = "simserialED.scripts.generate_env:main"
