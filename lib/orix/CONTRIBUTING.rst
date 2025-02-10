@@ -1,0 +1,1 @@
+Visit https://github.com/pyxem/orix/tree/develop/doc/dev/ for the contributing guide.

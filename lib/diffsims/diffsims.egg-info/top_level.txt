@@ -1,0 +1,10 @@
+crystallography
+diffsims
+generators
+libraries
+pattern
+sims
+simulations
+structure_factor
+tests
+utils

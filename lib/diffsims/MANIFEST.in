@@ -1,0 +1,16 @@
+# Info on valid syntax for controlling files in the distribution in this file:
+# * https://setuptools.pypa.io/en/latest/userguide/miscellaneous.html
+# * https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+
+include CHANGELOG.rst
+include CONTRIBUTING.rst
+include LICENSE
+include MANIFEST.in
+include README.rst
+include readthedocs.yaml
+include setup.cfg
+include setup.py
+include diffsims/tests/**/*.npy
+
+recursive-include doc Makefile make.bat *.rst *.py *.png
+recursive-include examples *.py *.rst
