@@ -2,9 +2,10 @@
 import h5py
 import numpy as np
 
+num_images = 100                     # Change the number of images as desired
+output_dir = "/home/bubl3932/files/UOX_sim"
 # Set the output file name and number of empty backgrounds to create
 output_file = "100_empty_backgrounds.h5"  # Change the file name/path as needed
-num_images = 100                     # Change the number of images as desired
 
 def create_empty_backgrounds(output_file, num_images):
     # Define image dimensions and data type (matching the original images: 1024x1024, float32)
