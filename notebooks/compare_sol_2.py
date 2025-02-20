@@ -48,8 +48,8 @@ def parse_line(line):
 
 def main():
     
-    file1_path = "/Users/xiaodong/Desktop/simulations/UOX/simulation-43/UOXsim_-512.5_-512.5.sol"
-    file2_path = "/Users/xiaodong/Desktop/simulations/UOX/simulation-43/orientation_matrices.sol"
+    file1_path = "/home/bubl3932/files/UOX_sim/simulation-47/UOXsim_-512.5_-512.5.sol"
+    file2_path = "/home/bubl3932/files/UOX_sim/simulation-49/orientation_matrices.sol"
 
     # Dictionaries to hold data, keyed by identifier.
     data1 = {}
@@ -96,7 +96,11 @@ def main():
             if abs(b) < 1e-12:
                 result.append("undefined")
             else:
-                result.append(f"{a / b:.5f}")
+                # result.append(f"{(a / b):.5f}")
+                # res = 10 ** (a / b)
+                # result.append(f"{res:.5f}") # amplify by expontentiating the difference
+                res = abs (a / b)
+                result.append(f"{res:.5f}") # only look at absolute values
 
         division_results[identifier] = result
 

@@ -70,7 +70,7 @@ def read_stream_write_sol(stream_file_path, lattice):
 # Example usage
 if __name__ == "__main__":
     # Example input stream file path and lattice value
-    stream_file_path = '/home/buster/UOXm/5x5_0-01/best_results_RCIS_1_2_3_-1_1_1.stream'  # Update this with your actual file path
+    stream_file_path = '/home/bubl3932/files/UOX_sim/simulation-47/UOXsim_-512.5_-512.5.stream'  # Update this with your actual file path
     lattice = 'oI'  # Example lattice value, replace with the appropriate lattice for your data
 
     # Process the stream file and write output to the .sol file
