@@ -16,6 +16,7 @@ Usage:
     python compare_sol.py file1.sol file2.sol
 """
 
+import os
 import sys
 import csv
 import matplotlib.pyplot as plt
@@ -100,7 +101,6 @@ def main():
         division_results[identifier] = result
 
     # --- Write CSV output ---
-    import os
     dir = os.path.dirname(file1_path)
     csv_output = os.path.join(dir, "compare_sol_output.csv")
     # Determine the maximum number of numeric columns (they should be uniform for all common identifiers).
