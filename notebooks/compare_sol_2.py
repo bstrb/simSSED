@@ -96,11 +96,11 @@ def main():
             if abs(b) < 1e-12:
                 result.append("undefined")
             else:
-                # result.append(f"{(a / b):.5f}")
+                result.append(f"{(a / b):.5f}")
                 # res = 10 ** (a / b)
                 # result.append(f"{res:.5f}") # amplify by expontentiating the difference
-                res = abs (a / b)
-                result.append(f"{res:.5f}") # only look at absolute values
+                # res = abs (a / b)
+                # result.append(f"{res:.5f}") # only look at absolute values
 
         division_results[identifier] = result
 
