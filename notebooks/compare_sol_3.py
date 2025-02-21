@@ -71,7 +71,13 @@ def compare_sol(file1_path, file2_path, plot=True):
                 data2[identifier] = numbers
 
     # Find common identifiers between both files.
-    common_ids = sorted(set(data1.keys()) & set(data2.keys()))
+    common_ids = list(set(data1.keys()) & set(data2.keys()))
+    
+    # Sort by the integer that follows "//". Example: "//16" -> 16
+    def numeric_id(identifier):
+        return int(identifier.replace("//", ""))  # assumes the part after // is always integer
+    common_ids.sort(key=numeric_id)
+
     if not common_ids:
         print("No matching identifiers found in both files.")
         sys.exit(0)
@@ -93,15 +99,15 @@ def compare_sol(file1_path, file2_path, plot=True):
             if abs(b) < 1e-12:
                 result.append("undefined")
             else:
-                # result.append(f"{(a / b):.5f}")
-                res = abs(a/b)
+                # Take absolute ratio for clarity
+                res = abs(a / b)
                 result.append(f"{res:.5f}")
 
         division_results[identifier] = result
 
     # --- Write CSV output ---
-    dir = os.path.dirname(file2_path)
-    csv_output = os.path.join(dir, "compare_sol_output.csv")
+    output_dir = os.path.dirname(file2_path)
+    csv_output = os.path.join(output_dir, "compare_sol_output.csv")
     # Determine the maximum number of numeric columns (they should be uniform for all common identifiers).
     max_cols = 0
     for identifier in division_results:
@@ -120,8 +126,8 @@ def compare_sol(file1_path, file2_path, plot=True):
     print(f"Division results have been written to '{csv_output}'.")
 
     # --- Plot the results ---
-    # Convert the "undefined" strings to np.nan for plotting.
-    # We'll create a 2D array, rows = identifiers, columns = each numeric value
+    # Convert "undefined" strings to np.nan for plotting.
+    # We'll create a 2D array: rows = identifiers, columns = numeric values.
     if plot:
         plot_data = []
         valid_identifiers = []
@@ -142,9 +148,9 @@ def compare_sol(file1_path, file2_path, plot=True):
             print("No valid numeric data to plot.")
             sys.exit(0)
 
-        # Convert to numpy array for easier slicing: shape = (num_identifiers, num_columns)
+        # Convert to numpy array for easier slicing
         plot_data = np.array(plot_data, dtype=float)
-        x = np.arange(len(valid_identifiers))  # x positions for each identifier
+        x = np.arange(len(valid_identifiers))  # x positions
 
         plt.figure(figsize=(10, 6))
         # Plot one line per column
@@ -158,12 +164,12 @@ def compare_sol(file1_path, file2_path, plot=True):
         plt.ylabel("Division Result (file1 / file2)")
         plt.title("Comparison of .sol Files")
         plt.legend()
-        plt.ylim(0.5, 1.5)  # Set y-axis limits from 0.5 to 1.5
+        # Fix y-axis range (optional):
+        plt.ylim(0.5, 1.5)
         plt.tight_layout()
         plt.show()
 
-# # Example usage:
-
+# Example usage:
 file1_path = "/home/bubl3932/files/UOX_sim/simulation-21/UOXsim_xgandalf_-512.5_-512.5.sol"
 file2_path = "/home/bubl3932/files/UOX_sim/simulation-21/orientation_matrices.sol"
 compare_sol(file1_path, file2_path, plot=True)
