@@ -38,7 +38,7 @@ def calculate_calibration(
 # Example usage:
 if __name__ == "__main__":
     # Define experimental parameters:
-    wavelength_A = 0.0251                 # Cu Kα X-ray wavelength in Å
+    wavelength_A = 0.019687                # Cu Kα X-ray wavelength in Å
     camera_length_m = 1.0                   # camera length in meters
     pixel_resolution = 17857.14285714286    #  1.0 / 55e-6  # Example: 55 µm pixel size -> pixels per meter
 

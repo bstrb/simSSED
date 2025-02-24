@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: diffsims
 Version: 0.7.dev1
 Summary: Diffraction Simulations in Python
@@ -53,6 +53,16 @@ Requires-Dist: coverage>=5.0; extra == "dev"
 Requires-Dist: pytest>=5.4; extra == "dev"
 Requires-Dist: pytest-cov>=2.8.1; extra == "dev"
 Requires-Dist: pytest-xdist; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: home-page
+Dynamic: license
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 diffsims is an open-source Python library for simulating diffraction.
 

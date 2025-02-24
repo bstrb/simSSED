@@ -1,0 +1,50 @@
+Metadata-Version: 2.2
+Name: simserialED
+Version: 0.0.1
+Summary: Simulate serialED datasets
+Author-email: Viljar Femoen <viljar.femoen@mmk.su.se>
+Description-Content-Type: text/markdown
+Requires-Dist: hyperspy>=2.2
+Requires-Dist: pyxem>=0.19.1
+Requires-Dist: flask
+
+# simserialED
+
+1. Create an environment with 
+```
+python -m venv .venv
+```
+
+2. Activate the environment with 
+```
+.venv/Scripts/activate
+```
+on windows, or
+```
+.venv/bin/activate
+```
+on linux/mac (I think)
+
+3. Install with
+```
+git submodule update --init
+cd lib/orix
+pip install .
+cd ..
+cd diffsims
+pip install .
+cd ..
+cd ..
+pip install .
+```
+
+4. Run the GUI with
+```
+simserialED.gui
+```
+
+5. It might complain about a missing .env-file. Create it with 
+```
+simserialED.setup
+```
+and try again.

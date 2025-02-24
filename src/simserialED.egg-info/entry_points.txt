@@ -1,0 +1,3 @@
+[console_scripts]
+simserialED = simserialED:gui
+simserialED.setup = simserialED.scripts.generate_env:main
