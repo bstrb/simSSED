@@ -1,6 +1,4 @@
 import re
-# from calculate_weighted_rmsd import calculate_weighted_rmsd
-# from calculate_weighted_rmsd_pi import calculate_weighted_rmsd_pi
 from calc_wrmsd import calc_wrmsd
 from calculate_cell_deviation import calculate_cell_deviation
 from match_peaks_to_reflections import match_peaks_to_reflections
@@ -53,8 +51,6 @@ def extract_chunk_data(chunk, original_cell_params, tolerance=1.0):
 
     # Calculate weighted RMSD if possible
     if fs_ss and ref_fs_ss:
-        # weighted_rmsd = calculate_weighted_rmsd(fs_ss, intensities, ref_fs_ss)
-        # weighted_rmsd, percent_indexed = calculate_weighted_rmsd_pi(fs_ss, intensities, ref_fs_ss)
         weighted_rmsd, fraction_outliers = calc_wrmsd(fs_ss, intensities, ref_fs_ss)
     else:
         weighted_rmsd = None

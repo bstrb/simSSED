@@ -6,7 +6,6 @@ from itertools import groupby
 from tqdm import tqdm
 from extract_chunk_data import extract_chunk_data
 from calculate_combined_metric import calculate_combined_metric
-from append_event_count import append_event_count
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import Manager, Lock
 
@@ -119,7 +118,7 @@ def process_and_store(stream_file_path, metric_weights, all_results, header, loc
         all_results.extend(results)
         all_results.extend(none_results)
 
-def process_all_stream_files(folder_path, metric_weights=None, normalization_method='zscore'):
+def process_all_stream_files(folder_path, IQM, metric_weights=(1,1,1,1,1,1), normalization_method='zscore'):
     """
     Process all stream files in a folder, perform global normalization,
     compute combined metrics for each chunk, and output CSV and stream files.
@@ -253,12 +252,14 @@ def process_all_stream_files(folder_path, metric_weights=None, normalization_met
     updated_results.sort(key=lambda x: (x[1], x[2]))
     
     # Create filenames for the output files based on the weight combination.
-    if isinstance(metric_weights, (list, tuple)):
-        weight_combination_str = '_'.join([str(v) for v in metric_weights])
-    else:
-        weight_combination_str = '_'.join([str(v) for v in list(metric_weights.values())])
-    output_csv_path = os.path.join(folder_path, f'combined_metrics_IQM_SUM_{weight_combination_str}.csv')
-    output_stream_path = os.path.join(folder_path, f'best_results_IQM_SUM_{weight_combination_str}.stream')
+    # if isinstance(metric_weights, (list, tuple)):
+    #     weight_combination_str = '_'.join([str(v) for v in metric_weights])
+    # else:
+    #     weight_combination_str = '_'.join([str(v) for v in list(metric_weights.values())])
+    # output_csv_path = os.path.join(folder_path, f'combined_metrics_IQM_{weight_combination_str}.csv')
+    # output_stream_path = os.path.join(folder_path, f'best_results_IQM_{weight_combination_str}.stream')
+    output_csv_path = os.path.join(folder_path, f'metric_values_{IQM}.csv')
+    output_stream_path = os.path.join(folder_path, f'merged_{IQM}.stream')
 
     # Write all updated results (with normalized metrics) to CSV grouped by event number.
     csv_header = [

@@ -2,28 +2,33 @@
 """
 This script takes two .sol files as input. Each file is expected to have lines like:
 
-    /Users/xiaodong/Desktop/simulations/UOX/simulation-43/sim.h5 //16 +0.0877521 +0.0730246 +0.0148768 -0.0877521 +0.0730246 +0.0148768 -0.0000000 -0.0231319 +0.0939282 0.000 0.000 oI
+    /path/to/sim.h5 //16 +0.0877521 +0.0730246 +0.0148768 -0.0877521 +0.0730246 +0.0148768 -0.0000000 -0.0231319 +0.0939282 0.000 0.000 oI
 
 It will:
   - Skip the first token (the file path) and the last three tokens ("0.000 0.000 oI").
   - Use the identifier (the second token, e.g. "//16") as a key.
-  - For each line that appears in both files (matched by the identifier), it divides the corresponding numeric entries from file1 (numerator) by file2 (denom).
-  - If a denominator value is 0, it outputs “undefined” for that entry.
-  - Finally, it prints a nicely formatted result.
-  
+  - For each line that appears in both files (matched by the identifier), it divides the corresponding numeric entries from file1 (numerator) by file2 (denominator).
+  - If a denominator value is 0, it outputs "undefined" for that entry.
+  - Writes all division results into a CSV file.
+  - Creates a simple line plot for the division results.
+
 Usage:
     python compare_sol.py file1.sol file2.sol
 """
 
+import os
 import sys
+import csv
+import matplotlib.pyplot as plt
+import numpy as np
 
 def parse_line(line):
     """
     Parses a line from the .sol file.
-    
+
     Expected line format:
       <filepath> <identifier> <num1> <num2> ... <numN> <tokenX> <tokenY> <tokenZ>
-    
+
     It skips the file path (first token) and the last three tokens.
     Returns the identifier (e.g. "//16") and a list of floats.
     """
@@ -41,15 +46,7 @@ def parse_line(line):
         numbers = []
     return identifier, numbers
 
-def main():
-    # if len(sys.argv) != 3:
-    #     print("Usage: {} file1.sol file2.sol".format(sys.argv[0]))
-    #     sys.exit(1)
-    
-    # file1_path = sys.argv[1]
-    # file2_path = sys.argv[2]
-    file2_path = "/Users/xiaodong/Desktop/simulations/UOX/simulation-43/orientation_matrices.sol"
-    file1_path = "/Users/xiaodong/Desktop/simulations/UOX/simulation-43/UOXsim_-512.5_-512.5.sol"
+def compare_sol(file1_path, file2_path, plot=True):
 
     # Dictionaries to hold data, keyed by identifier.
     data1 = {}
@@ -74,10 +71,19 @@ def main():
                 data2[identifier] = numbers
 
     # Find common identifiers between both files.
-    common_ids = sorted(set(data1.keys()) & set(data2.keys()))
+    common_ids = list(set(data1.keys()) & set(data2.keys()))
+    
+    # Sort by the integer that follows "//". Example: "//16" -> 16
+    def numeric_id(identifier):
+        return int(identifier.replace("//", ""))  # assumes the part after // is always integer
+    common_ids.sort(key=numeric_id)
+
     if not common_ids:
         print("No matching identifiers found in both files.")
         sys.exit(0)
+
+    # We'll store the division results for plotting and CSV.
+    division_results = {}  # key = identifier, value = list of (float or "undefined")
 
     # Process each common line.
     for identifier in common_ids:
@@ -86,18 +92,90 @@ def main():
         if len(nums1) != len(nums2):
             print(f"Warning: Identifier {identifier} has mismatched number of entries between files.")
             continue
-        result = []
-        for a, b in zip(nums1, nums2):
-            # If the denominator is 0 (or very close), mark as undefined.
-            if abs(b) < 1e-12:
-                result.append("undefined")
-            else:
-                result.append(f"{a / b:.5f}")
-        
-        # Print the result for this identifier.
-        print(f"Identifier {identifier}:")
-        print("  Division results: " + " ".join(result))
-        print()
 
+        result = []
+        # for a, b in zip(nums1, nums2):
+        #     # If the denominator is 0 (or very close), mark as undefined.
+        #     if abs(b) < 1e-12:
+        #         result.append("undefined")
+        #     else:
+        #         # Take absolute ratio for clarity
+        #         res = abs(a / b)
+        #         result.append(f"{res:.5f}")
+
+        for a, b in zip(nums1, nums2):
+            # Take absolute ratio for clarity
+            res = abs(abs(a) - abs(b))
+            result.append(f"{res:.5f}")
+
+        division_results[identifier] = result
+
+    # --- Write CSV output ---
+    output_dir = os.path.dirname(file2_path)
+    csv_output = os.path.join(output_dir, "compare_sol_abs_output.csv")
+    # Determine the maximum number of numeric columns (they should be uniform for all common identifiers).
+    max_cols = 0
+    for identifier in division_results:
+        max_cols = max(max_cols, len(division_results[identifier]))
+
+    with open(csv_output, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        # Header: "identifier", then columns for each numeric result
+        header = ["identifier"] + [f"value_{i}" for i in range(max_cols)]
+        writer.writerow(header)
+
+        for identifier in common_ids:
+            row = [identifier] + division_results[identifier]
+            writer.writerow(row)
+
+    print(f"Division results have been written to '{csv_output}'.")
+
+    # --- Plot the results ---
+    # Convert "undefined" strings to np.nan for plotting.
+    # We'll create a 2D array: rows = identifiers, columns = numeric values.
+    if plot:
+        plot_data = []
+        valid_identifiers = []
+        for identifier in common_ids:
+            row_values = []
+            has_valid = False
+            for val in division_results[identifier]:
+                if val == "undefined":
+                    row_values.append(np.nan)
+                else:
+                    row_values.append(float(val))
+                    has_valid = True
+            if has_valid:  # only keep rows that have at least one numeric value
+                plot_data.append(row_values)
+                valid_identifiers.append(identifier)
+
+        if not plot_data:
+            print("No valid numeric data to plot.")
+            sys.exit(0)
+
+        # Convert to numpy array for easier slicing
+        plot_data = np.array(plot_data, dtype=float)
+        x = np.arange(len(valid_identifiers))  # x positions
+
+        plt.figure(figsize=(10, 6))
+        # Plot one line per column
+        num_columns = plot_data.shape[1]
+        for col in range(num_columns):
+            y = plot_data[:, col]
+            plt.plot(x, y, marker='o', label=f"value_{col}")
+
+        plt.xticks(x, valid_identifiers, rotation=90)
+        plt.xlabel("Identifier")
+        plt.ylabel("Division Result (file1 / file2)")
+        plt.title("Comparison of .sol Files")
+        plt.legend()
+        # Fix y-axis range (optional):
+        plt.ylim(-0.001, 0.01)
+        plt.tight_layout()
+        plt.show()
+
+# Example usage:
 if __name__ == "__main__":
-    main()
+    file1_path = "/home/bubl3932/files/UOX_sim/simulation-21/UOXsim_xgandalf_-512.5_-512.5.sol"
+    file2_path = "/home/bubl3932/files/UOX_sim/simulation-21/orientation_matrices.sol"
+    compare_sol(file1_path, file2_path, plot=True)
