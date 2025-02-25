@@ -1,4 +1,5 @@
 import sys
+import os
 
 def parse_stream(stream_lines):
     """
@@ -79,8 +80,21 @@ def write_stream(outfile, header_lines, chunks, trailer_lines):
         outfile.write(line)
 
 def main():
-    default_input = "/home/bubl3932/files/UOX1/UOX_subset_center_sensitivity_0.2_pixels/best_results_IQM_SUM_12_12_10_-12_12_-15_10_13_-13.stream"
-    default_output = "/home/bubl3932/files/UOX1/UOX_subset_center_sensitivity_0.2_pixels/best_results_sorted.stream"
+    default_input = "/home/bubl3932/files/UOX_sim/simulation-21/UOXsim_from_file_-512.5_-512.5.stream"
+
+    # default_output = "/home/bubl3932/files/UOX1/UOX_subset_center_sensitivity_0.2_pixels/best_results_sorted.stream"
+    
+    # Separate directory and filename
+    directory, filename = os.path.split(default_input)
+
+    # Separate filename and extension
+    base, ext = os.path.splitext(filename)
+
+    # Add a string (e.g., a suffix) to the base name
+    new_filename = base + "_sorted" + ext
+
+    # Reconstruct the full path
+    default_output = os.path.join(directory, new_filename)
 
     if len(sys.argv) == 1:
         input_file = default_input

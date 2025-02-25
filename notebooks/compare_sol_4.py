@@ -10,7 +10,8 @@ It will:
   - For each line that appears in both files (matched by the identifier), it divides the corresponding numeric entries from file1 (numerator) by file2 (denominator).
   - If a denominator value is 0, it outputs "undefined" for that entry.
   - Writes all division results into a CSV file.
-  - Creates a simple line plot for the division results.
+  - Creates an interactive Plotly line plot for the division results.
+  - The interactive plot includes an update menu so you can choose to display all values or a single chosen value.
 
 Usage:
     python compare_sol.py file1.sol file2.sol
@@ -19,8 +20,8 @@ Usage:
 import os
 import sys
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
 
 def parse_line(line):
     """
@@ -82,7 +83,7 @@ def compare_sol(file1_path, file2_path, plot=True):
         print("No matching identifiers found in both files.")
         sys.exit(0)
 
-    # We'll store the division results for plotting and CSV.
+    # We'll store the division results for CSV and plotting.
     division_results = {}  # key = identifier, value = list of (float or "undefined")
 
     # Process each common line.
@@ -94,17 +95,8 @@ def compare_sol(file1_path, file2_path, plot=True):
             continue
 
         result = []
-        # for a, b in zip(nums1, nums2):
-        #     # If the denominator is 0 (or very close), mark as undefined.
-        #     if abs(b) < 1e-12:
-        #         result.append("undefined")
-        #     else:
-        #         # Take absolute ratio for clarity
-        #         res = abs(a / b)
-        #         result.append(f"{res:.5f}")
-
         for a, b in zip(nums1, nums2):
-            # Take absolute ratio for clarity
+            # For example, we compute the absolute difference between the absolute values:
             res = abs(abs(a) - abs(b))
             result.append(f"{res:.5f}")
 
@@ -114,9 +106,7 @@ def compare_sol(file1_path, file2_path, plot=True):
     output_dir = os.path.dirname(file2_path)
     csv_output = os.path.join(output_dir, "compare_sol_abs_output.csv")
     # Determine the maximum number of numeric columns (they should be uniform for all common identifiers).
-    max_cols = 0
-    for identifier in division_results:
-        max_cols = max(max_cols, len(division_results[identifier]))
+    max_cols = max(len(vals) for vals in division_results.values())
 
     with open(csv_output, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -130,9 +120,7 @@ def compare_sol(file1_path, file2_path, plot=True):
 
     print(f"Division results have been written to '{csv_output}'.")
 
-    # --- Plot the results ---
-    # Convert "undefined" strings to np.nan for plotting.
-    # We'll create a 2D array: rows = identifiers, columns = numeric values.
+    # --- Create Interactive Plotly Plot ---
     if plot:
         plot_data = []
         valid_identifiers = []
@@ -153,26 +141,56 @@ def compare_sol(file1_path, file2_path, plot=True):
             print("No valid numeric data to plot.")
             sys.exit(0)
 
-        # Convert to numpy array for easier slicing
+        # Convert to numpy array for easier slicing (rows: identifiers, columns: values)
         plot_data = np.array(plot_data, dtype=float)
-        x = np.arange(len(valid_identifiers))  # x positions
-
-        plt.figure(figsize=(10, 6))
-        # Plot one line per column
         num_columns = plot_data.shape[1]
-        for col in range(num_columns):
-            y = plot_data[:, col]
-            plt.plot(x, y, marker='o', label=f"value_{col}")
 
-        plt.xticks(x, valid_identifiers, rotation=90)
-        plt.xlabel("Identifier")
-        plt.ylabel("Division Result (file1 / file2)")
-        plt.title("Comparison of .sol Files")
-        plt.legend()
-        # Fix y-axis range (optional):
-        plt.ylim(-0.001, 0.01)
-        plt.tight_layout()
-        plt.show()
+        # Create a Plotly figure with one trace per column.
+        fig = go.Figure()
+        for col in range(num_columns):
+            fig.add_trace(go.Scatter(
+                x=valid_identifiers,
+                y=plot_data[:, col],
+                mode='lines+markers',
+                name=f"value_{col}"
+            ))
+
+        # Create update menu buttons:
+        # The first button ("All") will display all traces.
+        # Each subsequent button will display only one trace.
+        buttons = [
+            dict(label="All",
+                 method="update",
+                 args=[{"visible": [True]*num_columns},
+                       {"title": "All values"}])
+        ]
+        for i in range(num_columns):
+            visibility = [False] * num_columns
+            visibility[i] = True
+            buttons.append(dict(label=f"value_{i}",
+                                method="update",
+                                args=[{"visible": visibility},
+                                      {"title": f"value_{i}"}]))
+
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    active=0,
+                    buttons=buttons,
+                    x=1.05,
+                    y=1
+                )
+            ],
+            title="Comparison of .sol Files",
+            xaxis_title="Identifier",
+            yaxis_title="Division Result (|file1| vs |file2|)",
+            xaxis=dict(type='category')  # to keep the identifiers in order
+        )
+
+        # Save the interactive plot to an HTML file.
+        html_output = os.path.join(output_dir, "plotly_comparison.html")
+        fig.write_html(html_output)
+        print(f"Interactive plot saved to '{html_output}'.")
 
 # Example usage:
 file1_path = "/home/bubl3932/files/UOX_sim/simulation-21/UOXsim_xgandalf_-512.5_-512.5.sol"
