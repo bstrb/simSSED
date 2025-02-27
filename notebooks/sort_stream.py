@@ -80,7 +80,7 @@ def write_stream(outfile, header_lines, chunks, trailer_lines):
         outfile.write(line)
 
 def main():
-    default_input = "/home/bubl3932/files/UOX_sim/simulation-21/UOXsim_from_file_-512.5_-512.5.stream"
+    default_input = "/Users/xiaodong/Desktop/simulations/LTA/simulation-29/LTAsim_from_file_-512.5_-512.5.stream"
 
     # default_output = "/home/bubl3932/files/UOX1/UOX_subset_center_sensitivity_0.2_pixels/best_results_sorted.stream"
     
