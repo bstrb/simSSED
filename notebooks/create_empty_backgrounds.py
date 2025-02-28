@@ -3,8 +3,8 @@ import h5py
 import os
 import numpy as np
 
-num_images = 4186                     # Change the number of images as desired
-output_dir = "/home/bubl3932/files/LTA_sim"
+num_images = 14442                     # Change the number of images as desired
+output_dir = "/home/bubl3932/files/lyso_sim"
 # output_dir = "/Users/xiaodong/Desktop/simulations/LTA"
 # Set the output file name and number of empty backgrounds to create
 output_file = os.path.join(output_dir,f"{num_images}_empty_backgrounds.h5") # Change the file name/path as needed

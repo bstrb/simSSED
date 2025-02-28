@@ -6,9 +6,11 @@ def compute_B(cell):
     alpha, beta, gamma are in degrees, compute the B matrix.
     """
     a, b, c, alpha_deg, beta_deg, gamma_deg = cell
-    a = a/10
-    b = b/10
-    c = c/10
+
+    # Divide lengths so as given in nm rather than Å as in CrystFEL
+    a = a / 10
+    b = b / 10
+    c = c / 10
  
     # Convert angles to radians
     alpha = np.deg2rad(alpha_deg)
