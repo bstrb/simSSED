@@ -38,5 +38,6 @@ def compute_B(cell):
     ])
 
     # The B matrix (mapping fractional to reciprocal space) is the inverse-transpose of A:
-    B = np.linalg.inv(A).T
-    return B
+    # B = np.linalg.inv(A).T
+    Binv = np.linalg.inv(A)
+    return Binv
