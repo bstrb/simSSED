@@ -63,14 +63,14 @@ EOF
             flog.write(line)
         pbar.close()
 
-def run_refmac(mtz_file, pdb_file, max_res=20, min_res=1.5, ncycles=30, bins=10):
+def ctruncate_freerflag_refmac5(mtz_file, pdb_file, max_res=20, min_res=1.5, ncycles=30, bins=10):
 
     # Output directory is the same as the directory containing the input MTZ file
     output_dir = os.path.dirname(os.path.abspath(mtz_file))
 
     # Define intermediate file paths in the same directory
     ctruncate_mtz = os.path.join(output_dir, "output_ctruncate.mtz")
-    freerflag_mtz = os.path.join(output_dir, "output_ctruncatefr.mtz")
+    freerflag_mtz = os.path.join(output_dir, "output_freerflag.mtz")
 
     print("Running ctruncate...")
     run_ctruncate(mtz_file, ctruncate_mtz)
@@ -86,4 +86,4 @@ def run_refmac(mtz_file, pdb_file, max_res=20, min_res=1.5, ncycles=30, bins=10)
 if __name__ == "__main__":
     mtz_file = "data/1a0m.mtz"
     pdb_file = "data/1a0m.pdb"
-    run_refmac(mtz_file, pdb_file)
+    ctruncate_freerflag_refmac5(mtz_file, pdb_file)
