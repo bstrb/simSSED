@@ -2,7 +2,6 @@
 import os
 
 def format_number(value, is_sigma=False):
-    
     """
     Format a float to a maximum of 7 characters (excluding left padding)
     so that when right adjusted in an 8-character field it meets the SHELX style.
@@ -88,5 +87,4 @@ if __name__ == "__main__":
 
     input_filename = "/Users/xiaodong/Desktop/simulations/LTA/simulation-29/LTAsim_from_file_-512.5_-512.5_merge_5_iter/crystfel.hkl"
     
-
     convert_hkl_crystfel_to_shelx(input_filename)

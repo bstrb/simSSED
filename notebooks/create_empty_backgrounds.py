@@ -3,13 +3,9 @@ import h5py
 import os
 import numpy as np
 
-num_images = 642                     # Change the number of images as desired
-# output_dir = "/home/bubl3932/files/lyso_sim"
-output_dir = "/Users/xiaodong/Desktop/simulations/lyso"
-# Set the output file name and number of empty backgrounds to create
-output_file = os.path.join(output_dir,f"{num_images}_empty_backgrounds.h5") # Change the file name/path as needed
-
-def create_empty_backgrounds(output_file, num_images):
+def create_empty_backgrounds(output_dir, num_images):
+    # Set the output file name and number of empty backgrounds to create
+    output_file = os.path.join(output_dir,f"{num_images}_empty_backgrounds.h5") # Change the file name/path as needed
     # Define image dimensions and data type (matching the original images: 1024x1024, float32)
     image_shape = (1024, 1024)
     dtype = np.float32
@@ -42,4 +38,8 @@ def create_empty_backgrounds(output_file, num_images):
         print("Chunk dimensions: ", dset.chunks)
 
 if __name__ == "__main__":
-    create_empty_backgrounds(output_file, num_images)
+
+    num_images = 642                     # Change the number of images as desired
+    output_dir = "/home/bubl3932/files/lyso_sim"
+    # output_dir = "/Users/xiaodong/Desktop/simulations/lyso"
+    create_empty_backgrounds(output_dir, num_images)
