@@ -40,7 +40,8 @@ def format_number(value, is_sigma=False):
         formatted = formatted[:7]
     return formatted
 
-def convert_hkl_crystfel_to_shelx(input_filename): #, output_filename):
+def convert_hkl_crystfel_to_shelx(input_dir): #, output_filename):
+    input_filename = os.path.join(input_dir,"crystfel.hkl")
     output_filename = os.path.join(os.path.dirname(input_filename), "shelx/shelx.hkl")
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     reflections = []
@@ -85,6 +86,6 @@ def convert_hkl_crystfel_to_shelx(input_filename): #, output_filename):
 
 if __name__ == "__main__":
 
-    input_filename = "/Users/xiaodong/Desktop/simulations/LTA/simulation-29/LTAsim_from_file_-512.5_-512.5_merge_5_iter/crystfel.hkl"
+    input_dir = "/home/bubl3932/files/LTA_sim/simulation-43/merged_IQM_1_1_1_1_1_1_merge_5_iter"
     
-    convert_hkl_crystfel_to_shelx(input_filename)
+    convert_hkl_crystfel_to_shelx(input_dir)
