@@ -3,8 +3,6 @@ import subprocess
 import time
 from tqdm import tqdm
 
-from convert_hkl_to_mtz import convert_hkl_to_mtz
-
 def run_partialator(stream_file, output_dir, num_threads, pointgroup, iterations):
     """
     Run the 'partialator' command to process a single stream file.
@@ -65,13 +63,11 @@ def run_partialator(stream_file, output_dir, num_threads, pointgroup, iterations
         # Ensure we close the progress bar even if there's an exception
         progress.close()
 
-def run_partialator_and_convert(
+def merge(
     stream_file: str,
     pointgroup: str="P1",
     num_threads: int=1,
     iterations: int=3,
-    convert_to_mtz=False,
-    cell_file: str=None  # optional; not needed if convert_to_mtz is False
 ):
     """
     High-level function to run partialator on a single stream file and then optionally convert to MTZ(if cell file is provided as a string).
@@ -101,18 +97,9 @@ def run_partialator_and_convert(
     # Run partialator
     try:
         run_partialator(stream_file, output_dir, num_threads, pointgroup, iterations)
+        # print(f"Merging complete. Output in: {output_dir}")
     except subprocess.CalledProcessError:
         print(f"Failed partialator run for {stream_file}. Aborting conversion.")
         return None
-    
-    if convert_to_mtz:
-        if cell_file is None:
-            raise ValueError("A cell file must be provided when convert_to_mtz is True.")
-        try:
-            convert_hkl_to_mtz(output_dir, cell_file)
-            print(f"Conversion to MTZ successful. Output in: {output_dir}")
-        except Exception as e:
-            print(f"Failed to convert HKL to MTZ: {e}")
-            return None
 
     return output_dir
