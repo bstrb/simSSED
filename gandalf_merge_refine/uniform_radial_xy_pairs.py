@@ -47,6 +47,7 @@ def generate_sorted_grid_points(x_center, y_center, max_radius, step=0.5):
     points = grid_points_in_circle(x_center, y_center, max_radius, step)
     # Sort by the squared distance from the center (no need for square roots)
     points.sort(key=lambda pt: (pt[0] - x_center) ** 2 + (pt[1] - y_center) ** 2)
+    print(f"Generated {len(points)} grid points in the circle.")
     return points
 
 # Example usage:

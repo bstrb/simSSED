@@ -3,10 +3,10 @@ import subprocess
 from tqdm import tqdm
 
 from list_h5_files import list_h5_files
-from gen_temp_geometry_file import gen_temp_geometry_file
 from run_indexamajig import run_indexamajig
+from gen_temp_geometry_file import gen_temp_geometry_file
 from uniform_radial_xy_pairs import generate_sorted_grid_points
- 
+
 def gandalf_iterator(x, y, 
                      geomfile_path, 
                      cellfile_path, 
@@ -19,20 +19,20 @@ def gandalf_iterator(x, y,
                      ):
     
     list_h5_files(input_path)
+    output_folder = os.path.join(input_path, f"xgandalf_iterations_max_radius_{max_radius}_step_{step}")
+    os.makedirs(output_folder, exist_ok   = True) 
 
     xdefault = -x
     ydefault = -y
 
-    # Generate xy pairs including the default coordinates
     xy_pairs = list(generate_sorted_grid_points(xdefault, ydefault, max_radius=max_radius, step=step))
-    # xy_pairs = list(generate_xy_pairs(xdefault, ydefault, radius=1, num_points=20, decimals=1))
-
+    
     # Iterate over all xy pairs
     for x, y in tqdm(xy_pairs, desc="Processing XY pairs"):
         print(f"Running for x={x}, y={y}")
         try:
             temp_geomfile_path = gen_temp_geometry_file(geomfile_path, x, y) 
-            run_indexamajig(x, y, temp_geomfile_path, cellfile_path, input_path, output_file_base, num_threads, extra_flags=extra_flags)
+            run_indexamajig(x, y, temp_geomfile_path, cellfile_path, input_path, output_folder, output_file_base, num_threads, extra_flags=extra_flags)
 
         except KeyboardInterrupt:
             print("Process interrupted by user.")
