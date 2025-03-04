@@ -54,7 +54,7 @@ def generate_sorted_grid_points(x_center, y_center, max_radius, step=0.5):
 if __name__ == "__main__":
     center_x, center_y = 0, 0
     max_radius = 1    # maximum radius of the circle
-    step = 0.1        # grid granularity
+    step = 0.2        # grid granularity
     
     points = generate_sorted_grid_points(center_x, center_y, max_radius, step)
     

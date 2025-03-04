@@ -6,7 +6,7 @@ from tqdm import tqdm
 from process_all_stream_files import process_all_stream_files
 from append_event_count import append_event_count
 
-def automate_evaluation(stream_file_folder: str, weight_list):
+def automate_evaluation(stream_file_folder: str, weight_list, indexing_tolerance=1):
 
     """
     Process a stream file to extract and normalize chunk metrics.
@@ -47,7 +47,7 @@ def automate_evaluation(stream_file_folder: str, weight_list):
 
             # Evaluate multiple stream files
             print(f"Evaluating multiple stream files with weights: {weight}")
-            process_all_stream_files(stream_file_folder, IQM, weight)
+            process_all_stream_files(stream_file_folder, IQM, index_tolerance=indexing_tolerance, metric_weights=weight)
         
         except Exception as e:
             tqdm.write(f"An error occurred during processing of weights {weight}: {e}")

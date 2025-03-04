@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def main():
-    folder_path = "/home/bubl3932/files/LTA_sim/simulation-43"
+    folder_path = "/Users/xiaodong/Desktop/simulations/LTA/simulation-24/xgandalf_iterations_max_radius_1_step_0.2"
     os.chdir(folder_path)
     
     # Find all files matching LTA_*.stream

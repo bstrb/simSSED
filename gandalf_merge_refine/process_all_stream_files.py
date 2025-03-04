@@ -10,7 +10,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import Manager, Lock
 
 
-def process_stream_file(stream_file_path, metric_weights=None):
+def process_stream_file(stream_file_path, index_tolerance=1, metric_weights=None):
     """
     Process a stream file to extract raw chunk metrics.
 
@@ -82,7 +82,7 @@ def process_stream_file(stream_file_path, metric_weights=None):
             # extract_chunk_data is assumed to return a tuple:
             # (event_number, weighted_rmsd, length_deviation, angle_deviation,
             # peak_ratio, percentage_unindexed, chunk_content)
-            data = extract_chunk_data(chunk, original_cell_params)
+            data = extract_chunk_data(chunk, original_cell_params,tolerance=index_tolerance)
             if data is None:
                 continue
             (event_number, weighted_rmsd, fraction_outliers, length_deviation, angle_deviation, peak_ratio, percentage_unindexed, chunk_content) = data
@@ -106,11 +106,11 @@ def process_stream_file(stream_file_path, metric_weights=None):
     
     return results, none_results, header
 
-def process_and_store(stream_file_path, metric_weights, all_results, header, lock):
+def process_and_store(stream_file_path, metric_weights, all_results, header, lock, index_tolerance=1):
     """
     Helper function to process a single stream file and add its results to a shared list.
     """
-    results, none_results, file_header = process_stream_file(stream_file_path, metric_weights)
+    results, none_results, file_header = process_stream_file(stream_file_path, index_tolerance=index_tolerance, metric_weights=metric_weights)
     with lock:
         # Save header from the first processed file
         if file_header and not header:
@@ -118,7 +118,7 @@ def process_and_store(stream_file_path, metric_weights, all_results, header, loc
         all_results.extend(results)
         all_results.extend(none_results)
 
-def process_all_stream_files(folder_path, IQM, metric_weights=(1,1,1,1,1,1), normalization_method='zscore'):
+def process_all_stream_files(folder_path, IQM, index_tolerance=1, metric_weights=(1,1,1,1,1,1), normalization_method='zscore'):
     """
     Process all stream files in a folder, perform global normalization,
     compute combined metrics for each chunk, and output CSV and stream files.
@@ -159,7 +159,7 @@ def process_all_stream_files(folder_path, IQM, metric_weights=(1,1,1,1,1,1), nor
     # Process each stream file in parallel.
     with ProcessPoolExecutor() as executor:
         futures = {
-            executor.submit(process_and_store, stream_file, metric_weights, all_results, header, lock): stream_file
+            executor.submit(process_and_store, stream_file, metric_weights, all_results, header, lock, index_tolerance): stream_file
             for stream_file in stream_files
         }
         for future in as_completed(futures):
