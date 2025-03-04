@@ -17,7 +17,29 @@ def gandalf_iterator(x, y,
                      step=0.1, 
                      extra_flags=None
                      ):
-    
+    """
+    Run CrystFEL's 'indexamajig' on a grid of beam centers.
+
+    Args:
+        x (float): Initial beam center X coordinate in pixels.
+        y (float): Initial beam center Y coordinate in pixels.
+        geomfile_path (str): Path to the .geom file.
+        cellfile_path (str): Path to the .cell file containing cell parameters.
+        input_path (str): Path to the folder where .h5 files reside (and where output is stored).
+        output_file_base (str): Base name for output files (e.g., 'LTA'); final filenames will be 'base_x_y.h5'.
+        num_threads (int): Number of CPU threads to use.
+        max_radius (float): Maximum radius for the grid search, in pixels.
+        step (float): Grid step size in pixels (the smaller, the finer the grid).
+        extra_flags (list): Additional command-line flags to pass to 'indexamajig'.
+
+    Returns:
+        None. Outputs multiple .stream and .h5 files in the input_path folder.
+
+    Notes:
+        - The function performs a radial scan of beam centers around (x, y).
+        - Each new (x, y) is processed with the same CrystFEL parameters.
+        - Make sure CrystFEL is installed and in your PATH.
+    """
     list_h5_files(input_path)
     output_folder = os.path.join(input_path, f"xgandalf_iterations_max_radius_{max_radius}_step_{step}")
     os.makedirs(output_folder, exist_ok   = True) 

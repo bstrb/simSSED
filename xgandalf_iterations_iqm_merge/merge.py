@@ -70,7 +70,7 @@ def merge(
     iterations: int=3,
 ):
     """
-    High-level function to run partialator on a single stream file and then optionally convert to MTZ(if cell file is provided as a string).
+    High-level function to run partialator on a single stream file.
     Creates an output folder based on the stream_file name and iteration number.
     Returns the path to the output directory for further inspection if needed.
     
@@ -83,10 +83,6 @@ def merge(
     num_threads: Number of threads to use, allowing parallel processing (default is 1).
 
     iterations: Determines how many iterations the partialator will run (default is 3).
-
-    convert_to_mtz: A flag that, if set to True, will trigger an additional conversion step from HKL format to MTZ format.
-
-    cell_file: A required file for conversion when convert_to_mtz is True; otherwise, it is not needed.
 
     """
     output_dir = os.path.splitext(stream_file)[0] + f"_merge_{iterations}_iter"

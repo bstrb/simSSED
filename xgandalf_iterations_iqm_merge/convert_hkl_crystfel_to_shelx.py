@@ -40,9 +40,20 @@ def format_number(value, is_sigma=False):
         formatted = formatted[:7]
     return formatted
 
-def convert_hkl_crystfel_to_shelx(input_dir): #, output_filename):
+def convert_hkl_crystfel_to_shelx(input_dir: str):
+    """
+    Convert an crystfel formatted HKL file to an SHELX compatible HKL.
+
+    This function will look for the input HKL file (by default named 'crystfel.hkl') 
+    in 'input_dir', and then  produce the specified hkl file (by default 'shelx.hkl').
+
+    :param input_dir: The directory containing the crystfel.hkl file and where the shelx dir
+                    containing the shelx.hkl file will be created.
+    """
     input_filename = os.path.join(input_dir,"crystfel.hkl")
     output_filename = os.path.join(os.path.dirname(input_filename), "shelx/shelx.hkl")
+    print(f"[INFO] Converting {os.path.basename(input_filename)} to {os.path.basename(output_filename)} in directory: {os.path.dirname(input_filename)}")
+
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     reflections = []
     with open(input_filename, 'r') as f:
@@ -84,6 +95,8 @@ def convert_hkl_crystfel_to_shelx(input_dir): #, output_filename):
         final_sigma = format_number(0, is_sigma=True)
         out.write(f"{0:4d}{0:4d}{0:4d}{final_I:>8}{final_sigma:>8}{0:>4}\n")
 
+    print(f"[INFO] Conversion to {os.path.basename(output_filename)} completed successfully in: {os.path.join(os.path.dirname(input_filename))}/shelx")
+  
 if __name__ == "__main__":
 
     input_dir = "/home/bubl3932/files/LTA_sim/simulation-43/merged_IQM_1_1_1_1_1_1_merge_5_iter"
