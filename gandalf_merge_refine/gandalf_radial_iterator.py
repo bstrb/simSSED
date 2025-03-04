@@ -5,8 +5,7 @@ from tqdm import tqdm
 from list_h5_files import list_h5_files
 from gen_temp_geometry_file import gen_temp_geometry_file
 from run_indexamajig import run_indexamajig
-# from generate_xy_pairs import generate_xy_pairs
-from generate_random_xy_pairs_within_radius import generate_xy_pairs
+from uniform_radial_xy_pairs import generate_sorted_grid_points
  
 def gandalf_iterator(x, y, 
                      geomfile_path, 
@@ -14,8 +13,8 @@ def gandalf_iterator(x, y,
                      input_path, 
                      output_file_base, 
                      num_threads, 
-                     step=0.01, 
-                     layers=1, 
+                     max_radius=1, 
+                     step=0.1, 
                      extra_flags=None
                      ):
     
@@ -25,7 +24,7 @@ def gandalf_iterator(x, y,
     ydefault = -y
 
     # Generate xy pairs including the default coordinates
-    xy_pairs = [(xdefault, ydefault)] + list(generate_xy_pairs(xdefault, ydefault, radius=1, num_points=20, decimals=1))
+    xy_pairs = list(generate_sorted_grid_points(xdefault, ydefault, max_radius=max_radius, step=step))
     # xy_pairs = list(generate_xy_pairs(xdefault, ydefault, radius=1, num_points=20, decimals=1))
 
     # Iterate over all xy pairs
