@@ -73,4 +73,4 @@ def plot3d_indexing_rate(folder_path):
     plt.show()
 
 if __name__ == "__main__":
-    plot3d_indexing_rate("/Users/xiaodong/Desktop/simulations/LTA/simulation-24/xgandalf_iterations_max_radius_1_step_0.2")
+    plot3d_indexing_rate("/home/bubl3932/files/LTA_sim/simulation-45/xgandalf_iterations_max_radius_2_step_0.5")

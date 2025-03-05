@@ -3,22 +3,19 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def main():
-    folder_path = "/Users/xiaodong/Desktop/simulations/LTA/simulation-34/xgandalf_iterations_max_radius_2_step_0.5"
+def indexing_heatmap(folder_path):
     os.chdir(folder_path)
     
-    # Find all files matching LTA_*.stream
-    stream_files = glob.glob("LTA_*.stream")
-
+    # Find all files with the ".stream" extension
+    stream_files = glob.glob("*.stream")
     data = []
+    
     for stream_file in stream_files:
         base_name = os.path.splitext(stream_file)[0]
-        parts = base_name.split("_")  # e.g., ["LTA", "-511.9", "-513.1"]
-
-        # Extract x,y (keep negative if needed)
-        x = float(parts[1])
-        y = float(parts[2])
-
+        parts = base_name.rsplit("_", 2)
+        x = float(parts[-2])
+        y = float(parts[-1])
+        
         # Count "num_reflections" lines
         event_count = 0
         with open(stream_file, "r") as f:
@@ -44,9 +41,9 @@ def main():
 
     # Add a colorbar to show the scale of 'num_reflections'
     cbar = plt.colorbar(scatter)
-    cbar.set_label("Count of num_reflections")
+    cbar.set_label("Count of index results")
 
-    plt.title("Number of 'num_reflections' at Each (x, y) File Coordinate")
+    plt.title("Number of index results at Each (x, y) File Coordinate")
     plt.xlabel("X coordinate")
     plt.ylabel("Y coordinate")
     plt.grid(True)  # Optional grid
@@ -54,4 +51,5 @@ def main():
     plt.show()
 
 if __name__ == "__main__":
-    main()
+    input_folder = "/home/bubl3932/files/LTA_sim/simulation-45/xgandalf_iterations_max_radius_2_step_0.5"
+    indexing_heatmap(input_folder)
