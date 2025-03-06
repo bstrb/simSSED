@@ -83,7 +83,10 @@ def ctruncate_freerflag_refmac5(mtz_file, pdb_file, max_res=20, min_res=1.5, ncy
 
     print(f"Done! Check the output files in {output_dir}")
 
+    return output_dir
+
 if __name__ == "__main__":
     mtz_file = "/home/bubl3932/files/UOX1/UOX1_original_IQM/xgandalf_iterations_max_radius_1_step_0.5/filtered_metrics_merge_5_iter/output.mtz"
     pdb_file = "/home/bubl3932/files/UOX1/UOX1_original_IQM/UOX.pdb"
-    ctruncate_freerflag_refmac5(mtz_file, pdb_file)
+    output_dir = ctruncate_freerflag_refmac5(mtz_file, pdb_file)
+    print(f"Output directory: {output_dir}")
