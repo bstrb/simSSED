@@ -3,8 +3,11 @@ import csv
 def read_metric_csv(csv_path, group_by_event=True):
     """
     Reads a CSV of metrics, keeping 'event_number' as a string.
-    Skips rows like:  "Event number: 0-1,,,,,,,".
-    Parses all metric columns as floats (including negative values).
+    Skips rows like:  "Event number: 0-1,,,,,,," (if those exist).
+    Parses known metric columns as floats (including negative values).
+    
+    NOTE: This version does NOT expect a 'combined_metric' column in the CSV.
+    You can add or remove metrics from the parse list below as needed.
 
     Returns:
       - If group_by_event=True:
@@ -18,8 +21,7 @@ def read_metric_csv(csv_path, group_by_event=True):
         reader = csv.DictReader(f)
 
         for r in reader:
-            # Skip lines where stream_file starts with "Event number:"
-            # Those are just group-heading lines, not data rows.
+            # Some CSVs have lines that look like "Event number: 0-1,,,,,,,". Skip them:
             if r['stream_file'].startswith("Event number:"):
                 continue
 
@@ -29,7 +31,7 @@ def read_metric_csv(csv_path, group_by_event=True):
             # Parse numeric metrics as floats, skipping rows that can't parse
             try:
                 r['event_number']         = event_str  # e.g. "0-1"
-                r['combined_metric']      = float(r['combined_metric'])
+                # The following lines parse your separate metrics
                 r['weighted_rmsd']       = float(r['weighted_rmsd'])
                 r['fraction_outliers']    = float(r['fraction_outliers'])
                 r['length_deviation']     = float(r['length_deviation'])
@@ -37,7 +39,7 @@ def read_metric_csv(csv_path, group_by_event=True):
                 r['peak_ratio']           = float(r['peak_ratio'])
                 r['percentage_unindexed'] = float(r['percentage_unindexed'])
             except (ValueError, KeyError):
-                # This row doesn't have valid floats in the right columns, skip it
+                # This row doesn't have valid floats in the expected columns, skip it
                 continue
 
             rows.append(r)
@@ -54,10 +56,11 @@ def read_metric_csv(csv_path, group_by_event=True):
     return grouped
 
 
-def select_best_results_by_event(grouped_data, sort_metric='combined_metric'):
+def select_best_results_by_event(grouped_data, sort_metric='weighted_rmsd'):
     """
     Given a dict { event_number_str -> list of row dicts },
     return a flat list of the 'best' row (lowest `sort_metric`) per event.
+    (You can change the default sort_metric if desired.)
     """
     best_list = []
     for evt_str, rowlist in grouped_data.items():
@@ -74,19 +77,18 @@ def get_metric_ranges(rows, metrics=None):
 
     Returns a dict:
       {
-        'combined_metric': (min_val, max_val),
         'weighted_rmsd': (min_val, max_val),
+        'fraction_outliers': (min_val, max_val),
         ...
       }
 
-    If `metrics` is None, we use a default list of known metrics.
-    If a metric has no data in 'rows', we default to (0.0, 1.0).
+    If `metrics` is None, uses a default list of known metrics.
+    If a metric has no data in 'rows', defaults to (0.0, 1.0).
     """
     if not metrics:
         metrics = [
-            'combined_metric', 'weighted_rmsd', 'fraction_outliers',
-            'length_deviation', 'angle_deviation', 'peak_ratio',
-            'percentage_unindexed'
+            'weighted_rmsd', 'fraction_outliers', 'length_deviation',
+            'angle_deviation', 'peak_ratio', 'percentage_unindexed'
         ]
 
     ranges = {}
@@ -101,15 +103,35 @@ def get_metric_ranges(rows, metrics=None):
     return ranges
 
 
+def create_combined_metric(rows, metrics_to_combine, weights, new_metric_name='combined_metric'):
+    """
+    Add a new metric to each row dict, which is a weighted sum of the given metrics.
+      - rows: list of row dicts
+      - metrics_to_combine: list of metric names, e.g. ['weighted_rmsd', 'peak_ratio', ...]
+      - weights: list of floats, same length as metrics_to_combine
+      - new_metric_name: name of the new metric in each row, default "combined_metric"
+
+    This modifies the rows in-place (adding row[new_metric_name]).
+    """
+    for r in rows:
+        weighted_sum = 0.0
+        for m, w in zip(metrics_to_combine, weights):
+            weighted_sum += r[m] * w
+        r[new_metric_name] = weighted_sum
+
+
 def filter_rows(rows, thresholds):
     """
     Filter a list of row dicts by threshold dict, e.g.:
-      thresholds = { 'combined_metric': 0.5, 'weighted_rmsd': 1.0, ... }
+      thresholds = { 'weighted_rmsd': 1.0, 'combined_metric': 0.5, ... }
 
     We keep the row if row[metric] <= threshold for all metrics in the dict.
     """
     def passes(r):
         for metric, thr in thresholds.items():
+            if metric not in r:
+                # If the metric doesn't exist in row, skip it or treat as fail
+                return False
             if r[metric] > thr:
                 return False
         return True
@@ -117,55 +139,27 @@ def filter_rows(rows, thresholds):
     return [r for r in rows if passes(r)]
 
 
-def write_filtered_stream(rows, original_stream_path, output_stream_path):
+def write_filtered_csv(rows, output_csv_path, metrics_to_write=None):
     """
-    Writes a new stream file containing only events in 'rows'.
-    We assume each chunk in 'original_stream_path' has a line "Event: X"
-    matching row['event_number'] as a string.
+    Write a CSV file containing only `rows`, with specified columns.
 
-    - read original stream chunk-by-chunk
-    - parse out the event ID from lines containing "Event:"
-    - if event_number is in the set of kept IDs, write that chunk
+    If `metrics_to_write` is None, we'll write all keys found in the first row.
     """
-    keep_evt_ids = set(r['event_number'] for r in rows)
+    if not rows:
+        print(f"No rows to write. Empty CSV created at: {output_csv_path}")
+        with open(output_csv_path, 'w', newline='') as f:
+            f.write("No data\n")
+        return
 
-    with open(original_stream_path, 'r') as infile, open(output_stream_path, 'w') as outfile:
-        lines = infile.readlines()
+    if metrics_to_write is None:
+        # Gather all keys from the first row (assuming all rows have same keys):
+        metrics_to_write = list(rows[0].keys())
 
-        header_lines = []
-        chunk_lines = []
-        inside_chunk = False
-        wrote_header = False
+    with open(output_csv_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=metrics_to_write)
+        writer.writeheader()
+        for r in rows:
+            subset = {m: r.get(m, "") for m in metrics_to_write}
+            writer.writerow(subset)
 
-        for line in lines:
-            if line.startswith("----- Begin chunk -----"):
-                inside_chunk = True
-                if not wrote_header:
-                    # Write any lines we collected as "header" so far
-                    outfile.writelines(header_lines)
-                    wrote_header = True
-            elif line.startswith("----- End chunk -----"):
-                inside_chunk = False
-
-                # see if chunk_lines has an "Event: ???"
-                evt_str = None
-                for cl in chunk_lines:
-                    if "Event:" in cl:
-                        # parse out the entire string after "Event:"
-                        evt_str = cl.split("Event:")[1].strip()
-                        break
-
-                if evt_str is not None and evt_str in keep_evt_ids:
-                    outfile.write("----- Begin chunk -----\n")
-                    outfile.writelines(chunk_lines)
-                    outfile.write("----- End chunk -----\n")
-
-                chunk_lines = []
-            else:
-                if inside_chunk:
-                    chunk_lines.append(line)
-                else:
-                    # still in the header region
-                    header_lines.append(line)
-
-    print(f"Filtered stream written to: {output_stream_path}")
+    print(f"Filtered CSV written to: {output_csv_path}")

@@ -4,7 +4,7 @@ TODO List
 - Include difference of smallest distance (observed vs predicted) in IQM
 - Pass ADP to simulation
 - Study center sensitivity for simulated data
-- Write a script for XGandalf iterations + IQM + merging
+# Write a script for XGandalf iterations + IQM + merging
 - Install Olex, ShelX, Coot
 - Make simulations more like real data with center spreading and noise
 - Investigate scaling options for merging
