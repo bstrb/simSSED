@@ -49,12 +49,3 @@ def remove_frames_below_peak_number(input_file, tresh=1):
                 out_data_group.create_dataset(dataset_name, data=filtered_data, chunks=True)
 
     print(f"Filtered HDF5 file created: {output_file}")
-
-# # Path to the input HDF5 file
-# input_file = '/home/buster/UOX1/UOX_His_MUA_450nm_spot4_ON_20240311_0928.h5'
-
-# # Threshold for minimum number of peaks
-# threshold = 15
-
-# # Call the function to remove frames with less than the threshold number of peaks
-# remove_frames_below_peak_number(input_file, tresh=threshold)
