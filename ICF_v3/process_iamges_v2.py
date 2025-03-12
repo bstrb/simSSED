@@ -86,17 +86,19 @@ if __name__ == '__main__':
     image_file = "/Users/xiaodong/Desktop/UOX-data/UOX1/deiced_UOX1_min_15_peak.h5"
     mask_file = "/Users/xiaodong/mask/pxmask.h5"
     # Load mask from file (or construct one) as needed.
+    # with h5py.File(mask_file, 'r') as f_mask:
+    #     images_dataset = f_mask['/mask']
+    #     sample_mask = images_dataset[0]
+    #     mask = np.ones_like(sample_mask, dtype=bool)
     with h5py.File(mask_file, 'r') as f_mask:
-        images_dataset = f_mask['/mask']
-        sample_mask = images_dataset[0]
-        mask = np.ones_like(sample_mask, dtype=bool)
+        mask = f_mask['/mask'][:].astype(bool)
     # Use the mask array directly.
     
-    n_wedges = 4
+    n_wedges = 8
     n_rad_bins = 200
     xatol = 0.01
     fatol = 10
-    chunk_size = 1000
+    chunk_size = 800
     frame_interval = 100  # Calculate centers for every 100th frame (always including first and last).
     verbose = False
 
