@@ -19,10 +19,8 @@ def load_chunk(image_file, start, end):
         chunk = images[start:end].astype(np.float32)
     return chunk
 
-def process_images(image_file, mask_file, n_wedges, n_rad_bins, xatol, fatol, chunk_size, verbose):
-    # Load the mask (once).
-    with h5py.File(mask_file, 'r') as f_mask:
-        mask = f_mask['/mask'][:].astype(bool)
+def process_images(image_file, mask, n_wedges, n_rad_bins, xatol, fatol, chunk_size, frame_interval, verbose):
+    # 'mask' is assumed to be provided as an array.
 
     # Open the image file to determine the total number of images.
     with h5py.File(image_file, 'r') as f_img:
@@ -33,31 +31,42 @@ def process_images(image_file, mask_file, n_wedges, n_rad_bins, xatol, fatol, ch
     if os.path.exists(csv_file):
         os.remove(csv_file)
     header_written = False
-    frame_counter = 0
     start_time = time.time()
 
     # Create a multiprocessing Pool.
     with Pool() as pool:
         for start_idx in range(0, n_images, chunk_size):
             end_idx = min(start_idx + chunk_size, n_images)
+            # Determine which global frame indices in this chunk to process:
+            # Always process the first (0) and the last (n_images - 1) frames.
+            # Also process frames where index % frame_interval == 0.
+            chunk_frame_indices = [
+                i for i in range(start_idx, end_idx)
+                if (i == 0 or i == n_images - 1 or (i % frame_interval == 0))
+            ]
+            if not chunk_frame_indices:
+                continue  # Skip this chunk if no frames meet the criteria.
+            
             current_chunk = load_chunk(image_file, start_idx, end_idx)
             
-            # Prepare arguments for each image.
-            args = [(img, mask, n_wedges, n_rad_bins, xatol, fatol, verbose) for img in current_chunk]
+            # Prepare arguments for each selected image.
+            args = [
+                (current_chunk[i - start_idx], mask, n_wedges, n_rad_bins, xatol, fatol, verbose)
+                for i in chunk_frame_indices
+            ]
             
-            # Process images in parallel.
+            # Process selected images in parallel.
             results = pool.starmap(process_single_image, args)
             
             # Write results incrementally.
             df_chunk = pd.DataFrame(
-                [[frame_counter + idx, res[0], res[1]] for idx, res in enumerate(results)],
+                [[i, res[0], res[1]] for i, res in zip(chunk_frame_indices, results)],
                 columns=["frame_number", "center_x", "center_y"]
             )
             mode = "w" if not header_written else "a"
             df_chunk.to_csv(csv_file, index=False, mode=mode, header=not header_written)
             header_written = True
-            frame_counter += len(results)
-            print(f"Processed frames {start_idx} to {end_idx}")
+            print(f"Processed frames {chunk_frame_indices[0]} to {chunk_frame_indices[-1]} from chunk {start_idx} to {end_idx}")
             
     elapsed = time.time() - start_time
     print("Processing complete in {:.1f}s".format(elapsed))
@@ -67,16 +76,19 @@ if __name__ == '__main__':
     # Parameters – adjust these as needed.
     image_file = "/Users/xiaodong/Desktop/UOX-data/UOX1/deiced_UOX1_min_15_peak.h5"
     mask_file = "/Users/xiaodong/mask/pxmask.h5"
+    # Load mask from file (or construct one) as needed.
     with h5py.File(mask_file, 'r') as f_mask:
         images_dataset = f_mask['/mask']
         sample_mask = images_dataset[0]
         mask = np.ones_like(sample_mask, dtype=bool)
-    mask_file = mask
+    # Use the mask array directly.
+    
     n_wedges = 4
     n_rad_bins = 100
     xatol = 0.01
     fatol = 10
     chunk_size = 100
+    frame_interval = 10  # Calculate centers for every 10th frame (always including first and last).
     verbose = True
 
-    process_images(image_file, mask_file, n_wedges, n_rad_bins, xatol, fatol, chunk_size, verbose)
+    process_images(image_file, mask, n_wedges, n_rad_bins, xatol, fatol, chunk_size, frame_interval, verbose)

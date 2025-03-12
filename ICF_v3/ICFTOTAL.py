@@ -166,7 +166,8 @@ def find_diffraction_center(image, mask, initial_center=None,
 
     # Otherwise, perform the optimization.
     x0 = np.array(initial_center)
-    print("Initial center:", x0)
+    if verbose:
+        print("Initial center:", x0)
     res = minimize(center_asymmetry_metric, x0,
                    args=(image, mask, initial_center, dx_base, dy_base, n_wedges, n_rad_bins, verbose),
                    method='Nelder-Mead',
