@@ -1,13 +1,18 @@
 TODO List
 =========
+simssed:
 - Simulate orientations of the cell based on orientation matrices
-- Include difference of smallest distance (observed vs predicted) in IQM
 - Pass ADP to simulation
-- Study center sensitivity for simulated data
-# Write a script for XGandalf iterations + IQM + merging
-- Install Olex, ShelX, Coot
 - Make simulations more like real data with center spreading and noise
+icf:
+# Study center sensitivity for simulated data
+iqm:
+- Include difference of smallest distance (observed vs predicted) in IQM
+# Write a script for XGandalf iterations + IQM + merging
+dynamical effects:
 - Investigate scaling options for merging
 - Measure how dynamical a frame is
 - Study distribution of intensity for symmetry related reflections
+general:
 - Apply for grants for other conferences/schools
+- Install Olex, ShelX, Coot
