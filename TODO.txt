@@ -8,11 +8,20 @@ icf:
 # Study center sensitivity for simulated data
 iqm:
 - Include difference of smallest distance (observed vs predicted) in IQM
+- Remove radial median background
+- Optimize ring sizes
+- Profile integration
+- Optimize peakfinding
 # Write a script for XGandalf iterations + IQM + merging
 dynamical effects:
 - Investigate scaling options for merging
 - Measure how dynamical a frame is
 - Study distribution of intensity for symmetry related reflections
+- Along systematic row
+- Sayre equation
 general:
 - Apply for grants for other conferences/schools
 - Install Olex, ShelX, Coot
+# Write script to find center based on intensity
+# Optimize intensity based centerfinding by only performing on some frames and interpolate
+- Remove multiple shots of same crystal

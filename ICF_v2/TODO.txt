@@ -1,5 +1,5 @@
-- Write script to find center based on intensity
-- Optimize intensity based centerfinding by only performing on some frames and interpolate
+# Write script to find center based on intensity
+# Optimize intensity based centerfinding by only performing on some frames and interpolate
 - Remove radial median background
 - Optimize ring sizes
 - Profile integration
