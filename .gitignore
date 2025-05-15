@@ -1,0 +1,3 @@
+*.pyc
+*.nbi
+__pycache__/
