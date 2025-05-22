@@ -32,3 +32,6 @@ def write_cell_file(params, cell_path):
         f.write(f"al = {params['alpha']:.2f} deg\n")
         f.write(f"be = {params['beta']:.2f} deg\n")
         f.write(f"ga = {params['gamma']:.2f} deg\n")
+    
+    
+    print(f"→ Wrote {cell_path}")

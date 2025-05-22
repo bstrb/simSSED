@@ -32,10 +32,10 @@ def create_empty_backgrounds(output_dir, num_images):
             fillvalue=0        # All values set to 0 (i.e. "empty")
         )
 
-        print(f"Created dataset 'backgrounds' in file: {output_file}")
-        print("Dataset shape:    ", dset.shape)
-        print("Data type:        ", dset.dtype)
-        print("Chunk dimensions: ", dset.chunks)
+        # print(f"Created dataset 'backgrounds' in file: {output_file}")
+        # print("Dataset shape:    ", dset.shape)
+        # print("Data type:        ", dset.dtype)
+        # print("Chunk dimensions: ", dset.chunks)
 
 if __name__ == "__main__":
 
