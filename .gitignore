@@ -2,3 +2,7 @@
 *.nbi
 *.DS_Store
 __pycache__/
+**/__pycache__/
+*.py[cod]
+*.nbi
+*.DS_Store
