@@ -10,7 +10,8 @@ What you get:
   - orientations_UB.sol : 3x3 *orientation* matrices A(frame)=U(frame)@B (maps hkl -> reciprocal vector in lab, 1/Å)
 
 Notes:
-  - XDS defines UNIT_CELL_*_AXIS as the real-space unit cell axes (in Å) of the *unrotated* crystal (dial angle 0°).
+    - In (G)XPARM.XDS, UNIT_CELL_*_AXIS are the real-space unit cell axes (in Å) in the lab frame
+        at the reference setting corresponding to STARTING_ANGLE / STARTING_FRAME.
   - Per-image spindle angle:
         phi(frame) = STARTING_ANGLE + OSCILLATION_RANGE * (frame - STARTING_FRAME)
     (XDS assumes a right-handed rotation about ROTATION_AXIS when proceeding to the next image.)
@@ -219,6 +220,176 @@ def write_sol(
             fh.write(f"{ref_tag} //{i} {vals} 0.000 0.000 {bravais}\n")
 
 
+def read_sol_matrices(sol_path: Path) -> np.ndarray:
+    """
+    Read matrices from a CrystFEL-style .sol file.
+
+    Expected row format:
+      <tag> //<idx> m11 ... m33 0.000 0.000 <bravais>
+    """
+    mats = []
+    with Path(sol_path).expanduser().open("r") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            floats = []
+            for part in line.split():
+                try:
+                    floats.append(float(part))
+                except ValueError:
+                    continue
+            if len(floats) >= 9:
+                mats.append(np.array(floats[:9], dtype=float).reshape(3, 3))
+
+    if not mats:
+        raise ValueError(f"No orientation matrices found in: {sol_path}")
+
+    return np.stack(mats, axis=0)
+
+
+def generate_from_xds(
+    xds_folder: str | Path,
+    phi_mode: str = "mid",
+    fmt: str = "both",
+    ref_tag: str = "XDS",
+    out_prefix: str = "orientations",
+    frame_offset: int = 0,
+    angle_offset_deg: float = 0.0,
+    rotation_sign: int = 1,
+) -> dict:
+    """
+    Generate orientation .sol files from an XDS folder.
+
+    Returns:
+      {
+        "folder": Path,
+        "bravais": str,
+        "n_orientations": int,
+        "format": str,
+        "paths": {"R": Path | None, "UB": Path | None}
+      }
+    """
+    folder = Path(xds_folder).expanduser().resolve()
+    xds_inp = folder / "XDS.INP"
+    if not xds_inp.exists():
+        raise FileNotFoundError(f"Missing {xds_inp}")
+
+    gxparm = folder / "GXPARM.XDS"
+    if not gxparm.exists():
+        gxparm = folder / "XPARM.XDS"
+    if not gxparm.exists():
+        raise FileNotFoundError(f"Missing GXPARM.XDS or XPARM.XDS in {folder}")
+
+    if phi_mode not in ("start", "mid"):
+        raise ValueError("phi_mode must be 'start' or 'mid'")
+
+    if int(rotation_sign) not in (-1, 1):
+        raise ValueError("rotation_sign must be +1 or -1")
+
+    fmt = fmt.upper()
+    if fmt not in ("R", "UB", "BOTH"):
+        raise ValueError("fmt must be 'R', 'UB', or 'both'")
+
+    inp = _parse_xds_inp(xds_inp)
+    gx = _read_gxparm(gxparm)
+
+    first, last = inp["data_range"]
+    n = last - first + 1
+    if n <= 0:
+        raise ValueError(f"Bad DATA_RANGE in {xds_inp}: {first} {last}")
+
+    start_frame = gx["starting_frame"]
+    start_angle = gx["starting_angle"]
+    osc = gx["oscillation_range"]
+    axis = gx["rotation_axis"]
+    axis = axis / np.linalg.norm(axis)
+
+    cell = gx["cell"]
+    a_axis_lab, b_axis_lab, c_axis_lab = gx["cell_axes_lab"]
+    A0_lab = np.stack([a_axis_lab, b_axis_lab, c_axis_lab], axis=1)
+
+    A_cart = _cell_A_cart(cell)
+    U0 = A0_lab @ np.linalg.inv(A_cart)
+    U0 = _closest_rotation(U0)
+
+    B = _cell_B_recip(cell)
+
+    source_frames = np.arange(first, last + 1, dtype=int)
+    frames = source_frames.astype(float) + float(frame_offset)
+    phi_abs = start_angle + osc * (frames - float(start_frame))
+    if phi_mode == "mid":
+        phi_abs = phi_abs + 0.5 * osc
+    phi_abs = phi_abs + float(angle_offset_deg)
+
+    # GXPARM axes correspond to the reference orientation at STARTING_ANGLE.
+    # Apply only the relative spindle motion from that reference.
+    phi_rel = (phi_abs - float(start_angle)) * float(int(rotation_sign))
+
+    U_all = np.empty((n, 3, 3), dtype=float)
+    for i, ang_deg in enumerate(phi_rel):
+        Rax = _rodrigues(axis, np.deg2rad(ang_deg))
+        U_all[i] = Rax @ U0
+
+    bravais = _bravais_from_spacegroup(int(gx["spacegroup"]))
+
+    note_common = (
+        f"source={gxparm.name}, DATA_RANGE={first}-{last}, "
+        f"STARTING_FRAME={start_frame}, STARTING_ANGLE={start_angle}, OSC_RANGE={osc}, "
+        f"phi_mode={phi_mode}, frame_offset={int(frame_offset)}, angle_offset_deg={float(angle_offset_deg)}, "
+        f"rotation_sign={int(rotation_sign)}"
+    )
+
+    out_r = None
+    out_ub = None
+
+    if fmt in ("R", "BOTH"):
+        out_r = folder / f"{out_prefix}_R.sol"
+        write_sol(
+            out_r,
+            U_all,
+            bravais=bravais,
+            ref_tag=ref_tag,
+            note="Rotation matrices U(frame) (crystal Cartesian -> lab). " + note_common,
+        )
+
+    if fmt in ("UB", "BOTH"):
+        A_all = U_all @ B
+        out_ub = folder / f"{out_prefix}_UB.sol"
+        write_sol(
+            out_ub,
+            A_all,
+            bravais=bravais,
+            ref_tag=ref_tag,
+            note="Orientation matrices A(frame)=U(frame)@B (maps hkl -> reciprocal lab vector, 1/Å). " + note_common,
+        )
+
+    return {
+        "folder": folder,
+        "bravais": bravais,
+        "n_orientations": int(n),
+        "format": fmt,
+        "data_range": (int(first), int(last)),
+        "source_frame_numbers": source_frames.copy(),
+        "mapped_frame_numbers": frames.astype(int),
+        "starting_frame": int(start_frame),
+        "starting_angle_deg": float(start_angle),
+        "oscillation_range_deg": float(osc),
+        "rotation_axis_unit": axis.copy(),
+        "rotation_sign": int(rotation_sign),
+        "frame_offset": int(frame_offset),
+        "angle_offset_deg": float(angle_offset_deg),
+        "first_phi_abs_deg": float(phi_abs[0]),
+        "first_phi_rel_deg": float(phi_rel[0]),
+        "phi_abs_degrees": phi_abs.copy(),
+        "phi_rel_degrees": phi_rel.copy(),
+        "paths": {
+            "R": out_r,
+            "UB": out_ub,
+        },
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("xds_folder", type=str, help="Folder containing XDS.INP and GXPARM.XDS (or XPARM.XDS).")
@@ -230,87 +401,28 @@ def main():
                     help="First token written in each .sol row (can be any string; parser usually ignores it).")
     ap.add_argument("--out-prefix", default="orientations",
                     help="Output prefix inside xds_folder (default: orientations -> orientations_R.sol etc).")
+    ap.add_argument("--frame-offset", type=int, default=0,
+                    help="Integer offset applied to DATA_RANGE frame numbers before computing phi.")
+    ap.add_argument("--angle-offset-deg", type=float, default=0.0,
+                    help="Additional angle offset [deg] added to all computed phi values.")
+    ap.add_argument("--rotation-sign", type=int, default=1, choices=[-1, 1],
+                    help="Sign for relative spindle rotation applied from STARTING_ANGLE (+1 or -1).")
     args = ap.parse_args()
 
-    folder = Path(args.xds_folder).expanduser().resolve()
-    xds_inp = folder / "XDS.INP"
-    if not xds_inp.exists():
-        raise FileNotFoundError(f"Missing {xds_inp}")
-
-    gxparm = folder / "GXPARM.XDS"
-    if not gxparm.exists():
-        gxparm = folder / "XPARM.XDS"
-    if not gxparm.exists():
-        raise FileNotFoundError(f"Missing GXPARM.XDS or XPARM.XDS in {folder}")
-
-    inp = _parse_xds_inp(xds_inp)
-    gx  = _read_gxparm(gxparm)
-
-    first, last = inp["data_range"]
-    n = last - first + 1
-    if n <= 0:
-        raise ValueError(f"Bad DATA_RANGE in {xds_inp}: {first} {last}")
-
-    start_frame = gx["starting_frame"]
-    start_angle = gx["starting_angle"]
-    osc         = gx["oscillation_range"]
-    axis        = gx["rotation_axis"]
-    axis = axis / np.linalg.norm(axis)
-
-    cell = gx["cell"]
-    a_axis_lab, b_axis_lab, c_axis_lab = gx["cell_axes_lab"]
-    A0_lab = np.stack([a_axis_lab, b_axis_lab, c_axis_lab], axis=1)  # columns (Å)
-
-    # Build U0 (crystal Cartesian -> lab):  A0_lab = U0 * A_cart  => U0 = A0_lab * inv(A_cart)
-    A_cart = _cell_A_cart(cell)
-    U0 = A0_lab @ np.linalg.inv(A_cart)
-    U0 = _closest_rotation(U0)
-
-    # Reciprocal basis B in crystal Cartesian coords (1/Å)
-    B = _cell_B_recip(cell)
-
-    # per-image angles
-    frames = np.arange(first, last + 1, dtype=float)
-    phi = start_angle + osc * (frames - float(start_frame))
-    if args.phi_mode == "mid":
-        phi = phi + 0.5 * osc
-
-    U_all = np.empty((n, 3, 3), dtype=float)
-    for i, ang_deg in enumerate(phi):
-        Rax = _rodrigues(axis, np.deg2rad(ang_deg))
-        U_all[i] = Rax @ U0
-
-    bravais = _bravais_from_spacegroup(int(gx["spacegroup"]))
-
-    note_common = (
-        f"source={gxparm.name}, DATA_RANGE={first}-{last}, "
-        f"STARTING_FRAME={start_frame}, STARTING_ANGLE={start_angle}, OSC_RANGE={osc}, "
-        f"phi_mode={args.phi_mode}"
+    result = generate_from_xds(
+        xds_folder=args.xds_folder,
+        phi_mode=args.phi_mode,
+        fmt=args.format,
+        ref_tag=args.ref_tag,
+        out_prefix=args.out_prefix,
+        frame_offset=args.frame_offset,
+        angle_offset_deg=args.angle_offset_deg,
+        rotation_sign=args.rotation_sign,
     )
-
-    if args.format in ("R", "both"):
-        out_r = folder / f"{args.out_prefix}_R.sol"
-        write_sol(
-            out_r,
-            U_all,
-            bravais=bravais,
-            ref_tag=args.ref_tag,
-            note="Rotation matrices U(frame) (crystal Cartesian -> lab). " + note_common,
-        )
-
-    if args.format in ("UB", "both"):
-        # orientation matrix A = U @ B maps hkl -> reciprocal vector in lab (1/Å)
-        A_all = U_all @ B
-        out_ub = folder / f"{args.out_prefix}_UB.sol"
-        write_sol(
-            out_ub,
-            A_all,
-            bravais=bravais,
-            ref_tag=args.ref_tag,
-            note="Orientation matrices A(frame)=U(frame)@B (maps hkl -> reciprocal lab vector, 1/Å). " + note_common,
-        )
-
-    print(f"Wrote {n} orientations in {folder} (bravais={bravais}).")
+    print(
+        f"Wrote {result['n_orientations']} orientations in {result['folder']} "
+        f"(bravais={result['bravais']})."
+    )
 
 
 if __name__ == "__main__":
